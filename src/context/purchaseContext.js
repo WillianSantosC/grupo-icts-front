@@ -1,46 +1,59 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import api from '../services';
 
 export const PurchaseContext = createContext();
 
 export const PurchaseProvider = ({ children }) => {
   const [purchases, setPurchases] = useState([]);
+  const [purchaseId, setPurchaseId] = useState('');
 
-  function createPurchase(activityName) {
+  function createPurchase() {
     api
-      .post('/purchase/create', activityName)
-      .then((res) => console.log(res))
+      .post('/purchase/create')
+      .then(() => {
+        toast.success('Nova compra criada');
+        retrievePurchases();
+      })
       .catch((err) => console.log(err));
   }
 
   function addProduct(productId, purchaseId) {
     api
       .put(`/purchase/product/${productId}`, { id: purchaseId })
-      .then((res) => console.log(res))
+      .then(() => {
+        toast.success('Produto adicionado à compra');
+        retrievePurchases();
+      })
+      .catch(() =>
+        toast.error('Crie uma nova compra depois adicione produtos à ela')
+      );
+  }
+
+  function updatePurchase(purchaseId, data) {
+    api
+      .patch(`/purchase/${purchaseId}`, data)
+      .then(() => {
+        toast.success('Compra atualizada');
+        retrievePurchases();
+      })
       .catch((err) => console.log(err));
   }
 
-  function updatePurchase(productId) {
+  function deletePurchase(purchaseId) {
     api
-      .patch(`/purchase/${productId}`)
-      .then((res) => console.log(res))
-      .catch((err) => console.log(err));
-  }
-
-  function deletePurchase(productId) {
-    api
-      .delete(`/purchase/${productId}`)
-      .then((res) => console.log(res))
+      .delete(`/purchase/${purchaseId}`)
+      .then(() => {
+        toast.success('Compra deletada');
+        retrievePurchases();
+      })
       .catch((err) => console.log(err));
   }
 
   function retrievePurchases() {
     api
       .get('/purchase')
-      .then((res) => {
-        console.log(res);
-        setPurchases(res.data);
-      })
+      .then((res) => setPurchases(res.data))
       .catch((err) => console.log(err));
   }
 
@@ -51,6 +64,8 @@ export const PurchaseProvider = ({ children }) => {
   return (
     <PurchaseContext.Provider
       value={{
+        purchaseId,
+        setPurchaseId,
         purchases,
         createPurchase,
         addProduct,
